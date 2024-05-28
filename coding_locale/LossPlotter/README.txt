@@ -1,0 +1,1 @@
+Questa cartella serve solamente per fare in modo di plottare le loss dei modelli
