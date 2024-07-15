@@ -1,0 +1,6 @@
+norma_errore_u = no labels
+LabelTensor(47.9094, grad_fn=<AliasBackward0>)
+norma_errore_y = no labels
+LabelTensor(232.0006, grad_fn=<AliasBackward0>)
+norma_errore_p = no labels
+LabelTensor(47.9094, grad_fn=<AliasBackward0>)
