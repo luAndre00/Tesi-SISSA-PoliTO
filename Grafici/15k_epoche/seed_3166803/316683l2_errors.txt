@@ -1,0 +1,3 @@
+norma_errore_u = 81.96427917480469
+norma_errore_y = 35.771705627441406
+norma_errore_z = 81.96427917480469
