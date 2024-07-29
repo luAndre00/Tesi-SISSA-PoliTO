@@ -7,6 +7,9 @@ flag_extra_feature = 1
 # import sys
 # sys.path.append('C:/Users/Andrea/Desktop/Poli/Tesi magistrale/reporitory_SISSA_PoliTO')
 
+######### PINN
+
+
 import argparse
 import numpy as np
 import torch
@@ -113,7 +116,7 @@ if __name__ == "__main__":
     pinn = PINN(problem=opc, model=model, optimizer_kwargs={'lr': 0.002}, extra_features=feat)
     # Creazione di istanza di Trainer
     directory = 'pina.parametric_optimal_control_{}'.format(bool(args.features))
-    trainer = Trainer(solver=pinn, accelerator='cpu', max_epochs=args.epochs)  
+    trainer = Trainer(solver=pinn, accelerator='gpu', max_epochs=args.epochs, callbacks=[MetricTracker()])  
     # callbacks = [MetricTracker()], si può anche usare le gpu se uso la workstation
     
     # Training
@@ -130,24 +133,7 @@ plotter.plot(pinn, fixed_variables={'mu1': 3, 'mu2': 1}, components='z', filenam
 plotter.plot(pinn, fixed_variables={'mu1': 3, 'mu2': 0.01}, components='u', filename=nome + '_u2.png')
 plotter.plot(pinn, fixed_variables={'mu1': 3, 'mu2': 0.01}, components='y', filename=nome + '_y2.png')
 plotter.plot(pinn, fixed_variables={'mu1': 3, 'mu2': 0.01}, components='z', filename=nome + '_z2.png')
-# plot_loss(trainer) #Questo serve a plottare la loss quando c'è anche il callback
-
-################################################
-########################################### LOSS
-#Qui salvo la loss function
-andamento_loss = trainer._model.lossVec
-def salva_variabile(file, variabile):
-    with open(file, 'w') as f:
-        f.write(repr(variabile))
-
-# # Chiama la funzione per salvare la variabile
-salva_variabile('loss_'+ nome +'.txt', andamento_loss) #Qui per salvare la loss
-
-# # Grafico loss
-plt.loglog(andamento_loss)
-plt.gcf().savefig(nome + '_grafico_loss.pdf', format='pdf') # Qui per salvare il grafico della loss
-
-
+plotter.plot_loss(trainer, filename=nome+"loss") #Questo serve a plottare la loss quando c'è anche il callback
 
 #############################################CALCOLO DELLA NORMA l2 PER TUTTI GLI OUTPUT
 
@@ -174,9 +160,9 @@ errore_u = (output.extract(['u']) - fem_u).reshape(n,)
 errore_y = (output.extract(['y']) - fem_y).reshape(n,)
 errore_z = (output.extract(['z']) - fem_z).reshape(n,)
 
-norma_errore_u = torch.dot(errore_u, errore_u).item()
-norma_errore_y = torch.dot(errore_y, errore_y).item()
-norma_errore_z = torch.dot(errore_z, errore_z).item()
+norma_errore_u = np.linalg.norm(errore_u.detach().numpy())/np.linalg.norm(fem_u)
+norma_errore_y = np.linalg.norm(errore_y.detach().numpy())/np.linalg.norm(fem_y)
+norma_errore_z = np.linalg.norm(errore_z.detach().numpy())/np.linalg.norm(fem_z)
 
 with open(nome + 'l2_errors1.txt', 'w') as file:
     file.write(f"norma_errore_u = {norma_errore_u}\n")
@@ -204,9 +190,9 @@ errore_u = (output.extract(['u']) - fem_u).reshape(n,)
 errore_y = (output.extract(['y']) - fem_y).reshape(n,)
 errore_z = (output.extract(['z']) - fem_z).reshape(n,)
 
-norma_errore_u = torch.dot(errore_u, errore_u).item()
-norma_errore_y = torch.dot(errore_y, errore_y).item()
-norma_errore_z = torch.dot(errore_z, errore_z).item()
+norma_errore_u = np.linalg.norm(errore_u.detach().numpy())/np.linalg.norm(fem_u)
+norma_errore_y = np.linalg.norm(errore_y.detach().numpy())/np.linalg.norm(fem_y)
+norma_errore_z = np.linalg.norm(errore_z.detach().numpy())/np.linalg.norm(fem_z)
 
 with open(nome + 'l2_errors2.txt', 'w') as file:
     file.write(f"norma_errore_u = {norma_errore_u}\n")
