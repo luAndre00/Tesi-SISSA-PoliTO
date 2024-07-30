@@ -1,10 +1,3 @@
-seed = 316683
-nome = str(seed)  # Nome che voglio dare alla simulazione così da distinguere loss e plot per tutto
-
-epochs = 10000
-flag_extra_feature = 1
-
-
 ## PI-ARCH
 
 # import sys
@@ -99,13 +92,19 @@ class CustomMultiDFF(torch.nn.Module):
         return out
 
 if __name__ == "__main__":
-    torch.manual_seed(seed)
+
     parser = argparse.ArgumentParser(description="Run PINA")
     parser.add_argument("--load", help="directory to save or load file", type=str)
-    parser.add_argument("--features", help="extra features", type=int, default=flag_extra_feature)
-    parser.add_argument("--epochs", help="extra features", type=int, default=epochs)
-    parser.add_argument('-f')  # Serve per risolvere l'errore di sotto
+    parser.add_argument("--features", help="extra features", type=int, default=1)
+    parser.add_argument("--epochs", help="number of epochs to be trained", type=int, default=10000)
+    parser.add_argument("--lr", help="learning rate used for training", type=float, default=0.002)
+    parser.add_argument("--seed", help="seed of the simulation, it gives also the name to all the output in order to distinguish",
+                        type=int, default=1000)
+    # parser.add_argument('-f')  # Serve per risolvere l'errore di sotto
     args = parser.parse_args()
+
+    torch.manual_seed(args.seed)
+    nome = str(args.seed)  # Nome che voglio dare alla simulazione così da distinguere loss e plot per tutto
 
     if args.features is None:
         args.features = 0
@@ -131,15 +130,17 @@ if __name__ == "__main__":
     )
     
     # Creazione dell''stanza di PINN
-    pinn = PINN(problem=opc, model=model, optimizer_kwargs={'lr': 0.002}, extra_features=feat)
+    pinn = PINN(problem=opc, model=model, optimizer_kwargs={'lr': args.lr}, extra_features=feat)
     # Creazione di istanza di Trainer
     directory = 'pina.parametric_optimal_control_{}'.format(bool(args.features))
     trainer = Trainer(solver=pinn, accelerator='gpu', max_epochs=args.epochs, callbacks = [MetricTracker()])  
     # callbacks = [MetricTracker()], si può anche usare le gpu se uso la workstation
     
     # Training
-    trainer.train()
-
+    if args.load:
+        pinn = PINN.load_from_checkpoint(checkpoint_path=args.load, problem=opc, model=model, extra_features=feat)
+    else:
+        trainer.train()
 ###############################################
 ####################################### GRAFICI
 
@@ -151,12 +152,28 @@ plotter.plot(pinn, fixed_variables={'mu1': 3, 'mu2': 1}, components='z', filenam
 plotter.plot(pinn, fixed_variables={'mu1': 3, 'mu2': 0.01}, components='u', filename=nome + '_u2.png')
 plotter.plot(pinn, fixed_variables={'mu1': 3, 'mu2': 0.01}, components='y', filename=nome + '_y2.png')
 plotter.plot(pinn, fixed_variables={'mu1': 3, 'mu2': 0.01}, components='z', filename=nome + '_z2.png')
-plotter.plot_loss(trainer, filename=nome+"loss") 
+# plotter.plot_loss(trainer, filename=nome+"callback_loss", logy = True)
 
 #############################################CALCOLO DELLA NORMA l2 PER TUTTI GLI OUTPUT
 
+################################################
+########################################### LOSS
+#Qui salvo la loss function
+andamento_loss = trainer._model.lossVec
+def salva_variabile(file, variabile):
+    with open(file, 'w') as f:
+        f.write(repr(variabile))
+
+# # Chiama la funzione per salvare la variabile
+salva_variabile('loss_'+ nome +'.txt', andamento_loss) #Qui per salvare la loss
+
+# # Grafico loss
+plt.loglog(andamento_loss)
+plt.gcf().savefig(nome + '_grafico_loss.pdf', format='pdf') # Qui per salvare il grafico della loss
+
+
 n = 638
-path = "C:/Users/Andrea/Desktop/Poli/Tesi magistrale/reporitory_SISSA_PoliTO/Codici_notebook/Parametric_elliptic/FEM_Elliptic"
+path = "/scratch/atataran/Tesi-SISSA-PoliTO/Codici/Parametric_elliptic/FEM_Elliptic"
 
 
 #Qua calcoliamo la norma l2 per la soluzione con alpha1
@@ -178,9 +195,9 @@ errore_u = (output.extract(['u']) - fem_u).reshape(n,)
 errore_y = (output.extract(['y']) - fem_y).reshape(n,)
 errore_z = (output.extract(['z']) - fem_z).reshape(n,)
 
-norma_errore_u = np.linalg.norm(errore_u)/np.linalg.norm(fem_u)
-norma_errore_y = np.linalg.norm(errore_y)/np.linalg.norm(fem_y)
-norma_errore_z = np.linalg.norm(errore_z)/np.linalg.norm(fem_z)
+norma_errore_u = np.linalg.norm(errore_u.detach().numpy())/np.linalg.norm(fem_u.detach().numpy())
+norma_errore_y = np.linalg.norm(errore_y.detach().numpy())/np.linalg.norm(fem_y.detach().numpy())
+norma_errore_z = np.linalg.norm(errore_z.detach().numpy())/np.linalg.norm(fem_z.detach().numpy())
 
 with open(nome + 'l2_errors1.txt', 'w') as file:
     file.write(f"norma_errore_u = {norma_errore_u}\n")
@@ -208,9 +225,9 @@ errore_u = (output.extract(['u']) - fem_u).reshape(n,)
 errore_y = (output.extract(['y']) - fem_y).reshape(n,)
 errore_z = (output.extract(['z']) - fem_z).reshape(n,)
 
-norma_errore_u = np.linalg.norm(errore_u)/np.linalg.norm(fem_u)
-norma_errore_y = np.linalg.norm(errore_y)/np.linalg.norm(fem_y)
-norma_errore_z = np.linalg.norm(errore_z)/np.linalg.norm(fem_z)
+norma_errore_u = np.linalg.norm(errore_u.detach().numpy())/np.linalg.norm(fem_u.detach().numpy())
+norma_errore_y = np.linalg.norm(errore_y.detach().numpy())/np.linalg.norm(fem_y.detach().numpy())
+norma_errore_z = np.linalg.norm(errore_z.detach().numpy())/np.linalg.norm(fem_z.detach().numpy())
 
 with open(nome + 'l2_errors2.txt', 'w') as file:
     file.write(f"norma_errore_u = {norma_errore_u}\n")

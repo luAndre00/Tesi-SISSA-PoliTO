@@ -1,9 +1,3 @@
-seed = 316683
-nome = str(seed)  # Nome che voglio dare alla simulazione così da distinguere loss e plot per tutto
-
-epochs = 10000
-flag_extra_feature = 1
-
 # import sys
 # sys.path.append('C:/Users/Andrea/Desktop/Poli/Tesi magistrale/reporitory_SISSA_PoliTO')
 
@@ -53,6 +47,9 @@ class ParametricEllipticOptimalControl(SpatialProblem, ParametricProblem):
         laplace_y = laplacian(output_, input_, components=['y'], d=['x1', 'x2'])
         return - laplace_y - output_.extract(['u'])
 
+    def term3(input_,output_):
+        return input_.extract(['mu2'])*output_.extract(['u']) - output_.extract(['z'])
+
     # setting problem condition formulation
     conditions = {
         'gamma1': Condition(
@@ -68,7 +65,7 @@ class ParametricEllipticOptimalControl(SpatialProblem, ParametricProblem):
             location=CartesianDomain({'x1': -1, 'x2': y_range, 'mu1': mu1_range, 'mu2': mu2_range}),
             equation=FixedValue(0, ['z', 'y'])),
         'D': Condition(location=CartesianDomain({'x1': x_range, 'x2': y_range, 'mu1': mu1_range, 'mu2': mu2_range}),
-                       equation=SystemEquation([term1, term2], reduction='none')), #Senza il reduction none c'è un bias nella loss
+                       equation=SystemEquation([term1, term2, term3], reduction='none')), #Senza il reduction none c'è un bias nella loss
     }
 
 #############################################
@@ -86,13 +83,21 @@ class myFeature(torch.nn.Module):
     
 #########################
 if __name__ == "__main__":
+
+    flag_extra_feature = 1
     torch.manual_seed(seed)
     parser = argparse.ArgumentParser(description="Run PINA")
     parser.add_argument("--load", help="directory to save or load file", type=str)
-    parser.add_argument("--features", help="extra features", type=int, default=flag_extra_feature)
-    parser.add_argument("--epochs", help="extra features", type=int, default=epochs)
-    parser.add_argument('-f')  # Serve per risolvere l'errore di sotto
+    parser.add_argument("--features", help="extra features", type=int, default=1)
+    parser.add_argument("--epochs", help="extra features", type=int, default=10000)
+    parser.add_argument("--lr", help="learning rate used for training", type=float, default=0.002)
+    parser.add_argument("--seed", hepl="seed of the simulation, it gives also the name to all the output in order to distinguish",
+                        type=float, default=1000)
+    # parser.add_argument('-f')  # Serve per risolvere l'errore di sotto
     args = parser.parse_args()
+
+    torch.manual_seed(args.seed)
+    nome = str(args.seed)
 
     if args.features is None:
         args.features = 0
@@ -113,7 +118,7 @@ if __name__ == "__main__":
     model = FeedForward(4+len(feat),3,layers=[40,40,20],func=Softplus)
     
     # Creazione dell''stanza di PINN
-    pinn = PINN(problem=opc, model=model, optimizer_kwargs={'lr': 0.002}, extra_features=feat)
+    pinn = PINN(problem=opc, model=model, optimizer_kwargs={'lr': args.lr}, extra_features=feat)
     # Creazione di istanza di Trainer
     directory = 'pina.parametric_optimal_control_{}'.format(bool(args.features))
     trainer = Trainer(solver=pinn, accelerator='gpu', max_epochs=args.epochs, callbacks=[MetricTracker()])  
@@ -133,12 +138,27 @@ plotter.plot(pinn, fixed_variables={'mu1': 3, 'mu2': 1}, components='z', filenam
 plotter.plot(pinn, fixed_variables={'mu1': 3, 'mu2': 0.01}, components='u', filename=nome + '_u2.png')
 plotter.plot(pinn, fixed_variables={'mu1': 3, 'mu2': 0.01}, components='y', filename=nome + '_y2.png')
 plotter.plot(pinn, fixed_variables={'mu1': 3, 'mu2': 0.01}, components='z', filename=nome + '_z2.png')
-plotter.plot_loss(trainer, filename=nome+"loss") #Questo serve a plottare la loss quando c'è anche il callback
+plotter.plot_loss(trainer, filename=nome+"callback_loss") #Questo serve a plottare la loss quando c'è anche il callback
+
+################################################
+########################################### LOSS
+#Qui salvo la loss function
+andamento_loss = trainer._model.lossVec
+def salva_variabile(file, variabile):
+    with open(file, 'w') as f:
+        f.write(repr(variabile))
+
+# # Chiama la funzione per salvare la variabile
+salva_variabile('loss_'+ nome +'.txt', andamento_loss) #Qui per salvare la loss
+
+# # Grafico loss
+plt.loglog(andamento_loss)
+plt.gcf().savefig(nome + '_grafico_loss.pdf', format='pdf') # Qui per salvare il grafico della loss
 
 #############################################CALCOLO DELLA NORMA l2 PER TUTTI GLI OUTPUT
 
 n = 638
-path = "C:/Users/Andrea/Desktop/Poli/Tesi magistrale/reporitory_SISSA_PoliTO/Codici_notebook/Parametric_elliptic/FEM_Elliptic"
+path = "/scratch/atataran/Tesi-SISSA-PoliTO/Codici/Parametric_elliptic/FEM_Elliptic"
 
 
 #Qua calcoliamo la norma l2 per la soluzione con alpha1
