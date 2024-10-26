@@ -1,0 +1,6 @@
+errore relativo_u = 0.005718199684387963
+errore relativo_y = 0.05503107356299174
+errore relativo_z = 0.01035031055547706
+errore assoluto_u = 0.06618881970643997
+errore assoluto_y = 0.1279487907886505
+errore assoluto_z = 0.11980603635311127
