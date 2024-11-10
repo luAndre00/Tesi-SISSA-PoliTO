@@ -1,0 +1,1 @@
+La cartella solvers è da sostituire con quella che c'è dentro pina per poter usare anche NTKPINN
