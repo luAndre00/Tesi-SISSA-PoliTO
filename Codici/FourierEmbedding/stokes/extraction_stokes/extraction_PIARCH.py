@@ -92,7 +92,7 @@ if __name__ == "__main__":
                                                  func = torch.nn.Tanh, sigma1 = args.sigma1, sigma2 = args.sigma2, neurons = args.neurons)
 
     checkpoint_completo = path_load + args.checkp
-    pinn = PINN.load_from_checkpoint(checkpoint_path=checkpoint_completo + "_piarch.ckpt", problem=opc, model=model)
+    pinn = PINN.load_from_checkpoint(checkpoint_path=checkpoint_completo + ".ckpt", problem=opc, model=model)
 
 # Stampo le soluzioni solo se metto in input mu
 # if (args.mu):
@@ -107,7 +107,7 @@ if __name__ == "__main__":
 #    plotter.plot(pinn, fixed_variables={'mu': args.mu}, components='zy', filename='zy_'+str(args.mu)+'.png', method="pcolor")
 
 # Qui plotto tutte le loss in scala loglog
-Loss = np.load(checkpoint_completo + "_piarch.npy")
+Loss = np.load(checkpoint_completo + ".npy")
 pl = plot_loss()
 pl.all_plots(Loss)
 

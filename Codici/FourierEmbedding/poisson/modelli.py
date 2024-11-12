@@ -5,8 +5,6 @@ from pina import LabelTensor
 from pina.model import FeedForward
 from pina.model.layers import FourierFeatureEmbedding
 
-alpha = 0.008
-
 # Nuovo tipo di modello (fatto da Dario)
 class MultiscaleFourierNet_one_pipe(torch.nn.Module):
     def __init__(self, sigma, *args, **kwargs):

@@ -5,7 +5,6 @@ from pina import LabelTensor
 from pina.model import FeedForward
 from pina.model.layers import FourierFeatureEmbedding
 
-alpha = 0.008
 
 # Nuovo tipo di modello (fatto da Dario)
 class MultiscaleFourierNet_one_pipe(torch.nn.Module):
@@ -13,7 +12,7 @@ class MultiscaleFourierNet_one_pipe(torch.nn.Module):
         super().__init__()
         self.embedding = FourierFeatureEmbedding(input_dimension=4, output_dimension=100, sigma=sigma)
         self.layers = FeedForward(*args, **kwargs)
-        self.final_layer = torch.nn.Linear(20, 3)
+        self.final_layer = torch.nn.Linear(20, 2)
 
     def forward(self, x):
         e = self.layers(self.embedding(x))
@@ -33,7 +32,7 @@ class MultiscaleFourierNet_double_pipe(torch.nn.Module):
         self.embedding1 = FourierFeatureEmbedding(input_dimension=4, output_dimension=50, sigma=sigma1)
         self.embedding2 = FourierFeatureEmbedding(input_dimension=4, output_dimension=50, sigma=sigma2)
         self.layers = FeedForward(*args, **kwargs)
-        self.final_layer = torch.nn.Linear(20, 3)
+        self.final_layer = torch.nn.Linear(20, 2)
 
     def forward(self, x):
         e1 = self.layers(self.embedding1(x))

@@ -1,3 +1,7 @@
+cd Results
+./delete_all.sh
+cd ..
+
 python3 extraction_PIARCH.py --checkp "ffe_1"    --mu 0.5 --path_err "Stokes_05" --pipes 1 --sigma1 1 
 mv *png /scratch/atataran/Tesi-SISSA-PoliTO/Codici/FourierEmbedding/stokes/extraction_stokes/Results/mu_05/1
 mv *txt /scratch/atataran/Tesi-SISSA-PoliTO/Codici/FourierEmbedding/stokes/extraction_stokes/Results/mu_05/1
